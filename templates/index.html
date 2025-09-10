@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CertiChain - Certificate Blockchain</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <h1 class="mb-4">CertiChain</h1>
+
+    <!-- Add Certificate Form -->
+    <div class="card mb-4">
+        <div class="card-header">Add New Certificate</div>
+        <div class="card-body">
+            <form id="certForm">
+                <div class="mb-3">
+                    <label for="student" class="form-label">Student Name</label>
+                    <input type="text" class="form-control" id="student" required>
+                </div>
+                <div class="mb-3">
+                    <label for="course" class="form-label">Course</label>
+                    <input type="text" class="form-control" id="course" required>
+                </div>
+                <div class="mb-3">
+                    <label for="grade" class="form-label">Grade</label>
+                    <input type="text" class="form-control" id="grade" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Certificate</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-flex mb-4">
+        <button class="btn btn-success me-2" onclick="mineBlock()">Mine Block</button>
+        <button class="btn btn-secondary" onclick="fetchBlockchain()">View Blockchain</button>
+    </div>
+
+    <!-- Blockchain Display -->
+    <div id="blockchainDisplay"></div>
+</div>
+
+<script>
+    const certForm = document.getElementById('certForm');
+
+    certForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const student = document.getElementById('student').value;
+        const course = document.getElementById('course').value;
+        const grade = document.getElementById('grade').value;
+
+        const response = await fetch('/add_certificate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({student, course, grade})
+        });
+
+        const data = await response.json();
+        alert(data.message);
+        certForm.reset();
+    });
+
+    async function mineBlock() {
+        const response = await fetch('/mine_block');
+        const data = await response.json();
+        alert("Block mined! Index: " + data.block.index);
+        fetchBlockchain(); // Refresh view
+    }
+
+    async function fetchBlockchain() {
+        const response = await fetch('/get_chain');
+        const data = await response.json();
+
+        const container = document.getElementById('blockchainDisplay');
+        container.innerHTML = '<h3>Blockchain:</h3>';
+
+        data.chain.forEach(block => {
+            const card = document.createElement('div');
+            card.className = 'card mb-3';
+            card.innerHTML = `
+                <div class="card-body">
+                    <h5 class="card-title">Block #${block.index}</h5>
+                    <p><strong>Timestamp:</strong> ${new Date(block.timestamp * 1000).toLocaleString()}</p>
+                    <p><strong>Proof:</strong> ${block.proof}</p>
+                    <p><strong>Previous Hash:</strong> ${block.previous_hash}</p>
+                    <p><strong>Certificates:</strong></p>
+                    <pre>${JSON.stringify(block.certificates, null, 2)}</pre>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+</script>
+</body>
+</html>
